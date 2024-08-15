@@ -1,7 +1,14 @@
 {
-  "name": "tic-tac-toe",
+  "name": "mp-tic-tac-toe",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.16.0"
+  },
+  "author": {
+    "name": "Jeffrey Nwankwo",
+    "email": "chiedoziejeffrey@gmail.com"
+  },
   "scripts": {
     "dev": "nodemon",
     "build": "next build && tsc --project tsconfig.server.json",
