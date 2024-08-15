@@ -1,11 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "Node16",
     "outDir": "dist",
-    "lib": ["es2019"],
-    "target": "es2019",
+    "lib": ["ES2021.String"],
+    "target": "ES2020",
     "isolatedModules": false,
+    "moduleResolution": "Node16",
     "noEmit": false
   },
   "include": ["server/**/*.ts"]
