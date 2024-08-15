@@ -1,0 +1,7 @@
+.score-box {
+    @apply relative inline-block;
+}
+
+.score-box .score {
+    @apply text-transparent bg-clip-text font-josefin-sans bg-current-theme text-2xl font-bold inline-block relative transition-transform duration-500 ease-in-out;
+}

@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "game.css";
+@import "additional-styles.css";
+
+@layer base {
+  :root {
+    --electricBlue: #00ccff;
+    --brightPink: #ff66cc;
+    --neonGreen: #39ff14;
+    --solarYellow: #ffcc00;
+    --vividPurple: #c700ff;
+    --fieryRed: #ff4500;
+    --tangerineOrange: #ff7f00;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .electricBlue {
+    --theme-border-color: var(--electricBlue);
+
+    --theme-shadow: 0 0 10px #00ccff, 0 0 20px #00ccff, 0 0 30px #00ccff, 0 0 40px #00ccff;
+
+    --theme-background: linear-gradient(90deg, #00ccff, #0099ff);
+  }
+
+  .brightPink {
+    --theme-border-color: var(--brightPink);
+
+    --theme-shadow: 0 0 10px #ff66cc, 0 0 20px #ff66cc, 0 0 30px #ff66cc, 0 0 40px #ff66cc;
+
+    --theme-background: linear-gradient(90deg, #ff66cc, #ff00ff);
+  }
+
+  .neonGreen {
+    --theme-border-color: var(--neonGreen);
+
+    --theme-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 30px #39ff14, 0 0 40px #39ff14;
+
+    --theme-background: linear-gradient(90deg, #39ff14, #00ff00);
+  }
+
+  .solarYellow {
+    --theme-border-color: var(--solarYellow);
+
+    --theme-shadow: 0 0 10px #ffcc00, 0 0 20px #ffcc00, 0 0 30px #ffcc00, 0 0 40px #ffcc00;
+
+    --theme-background: linear-gradient(90deg, #ffcc00, #ff9900);
+  }
+
+  .vividPurple {
+    --theme-border-color: var(--vividPurple);
+
+    --theme-shadow: 0 0 10px #c700ff, 0 0 20px #c700ff, 0 0 30px #c700ff, 0 0 40px #c700ff;
+
+    --theme-background: linear-gradient(90deg, #c700ff, #a700ff);
+  }
+
+  .fieryRed {
+    --theme-border-color: var(--fieryRed);
+
+    --theme-shadow: 0 0 10px #ff4500, 0 0 20px #ff4500, 0 0 30px #ff4500, 0 0 40px #ff4500;
+
+    --theme-background: linear-gradient(90deg, #ff4500, #ff7f00, #ffcc00);
+  }
+
+  .tangerineOrange {
+    --theme-border-color: var(--tangerineOrange);
+
+    --theme-shadow: 0 0 10px #ff7f00, 0 0 20px #ff7f00, 0 0 30px #ff7f00, 0 0 40px #ff7f00;
+
+    --theme-background: linear-gradient(90deg, #ff7f00, #ff4500);
+  }
+  
+  .lightsOff {
+    --theme-border-color: white;
+
+    --theme-shadow: none;
+
+    --theme-background: linear-gradient(90deg, #ffffff, #ffffff6b);;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
