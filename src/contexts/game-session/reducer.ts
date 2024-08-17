@@ -1,84 +1,61 @@
 import type {
   GameSession,
-  Player,
   GameSettings,
   Scores,
-  PlayerType,
-  GameScores,
+  BoardState,
 } from "../../../type";
-import { DEFAULT_SCORE } from "@/lib/game/utils";
 
 export enum ActionTypes {
-  UPDATE_BOARD = "UPDATE_BOARD",
+  UPDATE_BOARD_CELLS = "UPDATE_BOARD_CELLS",
+  UPDATE_WHO_STARTED = "UPDATE_WHO_STARTED",
+  SET_BOARD = "SET_BOARD",
   SAVE_SETTINGS = "SAVE_SETTINGS",
-  INC_SCORE = "INC_SCORE",
+  UPDATE_SCORES = "UPDATE_SCORES",
   LOAD_SCORES = "LOAD_SCORES",
-  INIT_PLAYER = "INIT_PLAYER",
 }
 
 export type Action =
+  | { type: ActionTypes.SET_BOARD; payload: BoardState }
+  | { type: ActionTypes.UPDATE_BOARD_CELLS; payload: Array<string | null> }
+  | { type: ActionTypes.UPDATE_WHO_STARTED; payload: BoardState["whoStarted"] }
+  | { type: ActionTypes.SAVE_SETTINGS; payload: GameSettings }
   | {
-      type: ActionTypes.INIT_PLAYER;
-      payload: {
-        key: "player" | "opponent";
-        player: Player;
-      };
+      type: ActionTypes.UPDATE_SCORES;
+      payload: Scores;
     }
-  | { type: ActionTypes.UPDATE_BOARD; payload: Array<string | null> }
-  | {
-      type: ActionTypes.SAVE_SETTINGS;
-      payload: GameSettings;
-    }
-  | {
-      type: ActionTypes.INC_SCORE;
-      payload: keyof Scores;
-    }
-  | { type: ActionTypes.LOAD_SCORES; payload: GameScores };
+  | { type: ActionTypes.LOAD_SCORES; payload: Scores };
 
 export function gameSessionReducer(
   state: GameSession,
   action: Action
 ): GameSession {
   switch (action.type) {
-    case ActionTypes.INIT_PLAYER:
-      return {
-        ...state,
-        gameMode: "modeLive",
-        [action.payload.key]: action.payload.player,
-      };
-
-    case ActionTypes.UPDATE_BOARD:
+    case ActionTypes.SET_BOARD:
       return { ...state, board: action.payload };
 
-    case ActionTypes.INC_SCORE: {
-      const currentMode = state.gameMode;
-      const payload = action.payload;
-      const currentScores = state.scores[currentMode];
+    case ActionTypes.UPDATE_BOARD_CELLS:
+      return { ...state, board: { ...state.board, cells: action.payload } };
 
-      const score = currentScores[payload] ?? 0;
-
-      const newScores = {
-        ...currentScores,
-        [payload]: score + 1,
-      };
-
+    case ActionTypes.UPDATE_WHO_STARTED:
       return {
         ...state,
-        scores: {
-          ...state.scores,
-          [currentMode]: newScores,
+        board: { ...state.board, whoStarted: action.payload },
+      };
+
+    case ActionTypes.UPDATE_SCORES:
+      return {
+        ...state,
+        board: {
+          ...state.board,
+          scores: action.payload,
         },
       };
-    }
 
     case ActionTypes.SAVE_SETTINGS:
       return { ...state, settings: action.payload };
 
     case ActionTypes.LOAD_SCORES:
-      return {
-        ...state,
-        scores: action.payload,
-      };
+      return { ...state, board: { ...state.board, scores: action.payload } };
 
     default:
       return state;

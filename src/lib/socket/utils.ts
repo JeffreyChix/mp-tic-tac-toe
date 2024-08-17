@@ -20,8 +20,6 @@ export const SCORES_UPDATED = "SCORES_UPDATED";
 
 export const PLAYER_JOINED = "PLAYER_JOINED";
 
-export const JOINED_BOARD = "JOINED_BOARD";
-
 export const PLAY = "PLAY";
 
 export const PLAYED = "PLAYED";
@@ -32,7 +30,7 @@ export const RESET_BOARD = "RESET_BOARD";
 
 export const BOARD_RESET = "BOARD_RESET";
 
-export const UPDATE_NEXT_TO_PLAY = "UPDATE_NEXT_TO_PLAY";
+export const UPDATE_FOR_NEXT_ROUND = "UPDATE_FOR_NEXT_ROUND";
 
 export const CLOSE_BOARD = "CLOSE_BOARD";
 

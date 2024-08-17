@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { makeMove, checkWin, getWinningIndexes } from "@/lib/game/moves";
-import { DEFAULT_BOARD_STATE } from "@/lib/game/utils";
+import { DEFAULT_BOARD_CELLS } from "@/lib/game/utils";
 import { useSound } from "./useSound";
 import { useGameSession } from "./useGameSession";
 import { ActionTypes } from "@/contexts/game-session/reducer";
-import { PlayerType, Scores } from "../../type";
 import { useSocket } from "./useSocket";
 import {
   BOARD_RESET,
@@ -14,35 +13,54 @@ import {
   PLAY,
   PLAYED,
   RESET_BOARD,
-  UPDATE_NEXT_TO_PLAY,
+  UPDATE_FOR_NEXT_ROUND,
 } from "@/lib/socket/utils";
+import { BoardState, Player } from "../../type";
 
 export function usePlayLogic(boardId = "") {
   const { session, dispatch } = useGameSession();
   const { socket } = useSocket();
   const { playSound } = useSound();
 
-  const { board, player, opponent, gameMode } = session;
-  const playerSymbol = player.symbol;
-  const opponentSymbol = opponent.symbol;
+  const {
+    cells: boardCells,
+    player,
+    opponent,
+    gameMode,
+    whoStarted,
+    currentTurn,
+    scores,
+    gameStatus,
+  } = session.board;
 
-  const [isPlayerTurn, setIsPlayerTurn] = useState(player.type === "creator");
-  const playerStartedRef = useRef(player.type === "creator");
-  const [gameOver, setGameOver] = useState(false);
+  const playerSymbol = player.symbol;
+  const opponentSymbol = opponent?.symbol as string;
+
+  const isPlayerTurn = useMemo(
+    () => player.type === currentTurn,
+    [currentTurn, player.type]
+  );
 
   const isWin = useCallback(
-    () => checkWin(board, playerSymbol) || checkWin(board, opponentSymbol),
-    [board, playerSymbol, opponentSymbol]
+    () =>
+      checkWin(boardCells, playerSymbol) ||
+      checkWin(boardCells, opponentSymbol),
+    [boardCells, playerSymbol, opponentSymbol]
   );
 
   const isGameTie = useCallback(
-    () => board.every((s) => typeof s === "string") && !isWin(),
-    [board, isWin]
+    () => boardCells.every((s) => typeof s === "string") && !isWin(),
+    [boardCells, isWin]
   );
 
   const isEmpty = useCallback(
-    () => board.every((s) => typeof s !== "string"),
-    [board]
+    () => boardCells.every((s) => typeof s !== "string"),
+    [boardCells]
+  );
+
+  const isGameOver = useCallback(
+    () => isWin() || isGameTie(),
+    [isGameTie, isWin]
   );
 
   const handleOpponentComputerMove = useCallback(() => {
@@ -50,17 +68,26 @@ export function usePlayLogic(boardId = "") {
       return;
 
     setTimeout(() => {
-      const opponentMove = makeMove(board, playerSymbol, opponentSymbol);
+      const opponentMove = makeMove(boardCells, playerSymbol, opponentSymbol);
       if (opponentMove !== false) {
-        const updatedBoard = [...board];
+        const updatedBoard = [...boardCells];
         updatedBoard[opponentMove] = opponentSymbol;
-        dispatch({ type: ActionTypes.UPDATE_BOARD, payload: updatedBoard });
+
+        dispatch({
+          type: ActionTypes.SET_BOARD,
+          payload: {
+            ...session.board,
+            cells: updatedBoard,
+            currentTurn: currentTurn === "creator" ? "joined" : "creator",
+          },
+        });
+
         playSound("opponent-move");
-        setIsPlayerTurn(true);
       }
     }, 200);
   }, [
-    board,
+    boardCells,
+    currentTurn,
     dispatch,
     gameMode,
     isGameTie,
@@ -69,103 +96,102 @@ export function usePlayLogic(boardId = "") {
     opponentSymbol,
     playSound,
     playerSymbol,
+    session.board,
   ]);
 
   const handleResetBoard = useCallback(() => {
-    dispatch({ type: ActionTypes.UPDATE_BOARD, payload: DEFAULT_BOARD_STATE });
-    setGameOver(false);
+    dispatch({
+      type: ActionTypes.UPDATE_BOARD_CELLS,
+      payload: DEFAULT_BOARD_CELLS,
+    });
     playSound("new-game");
   }, [dispatch, playSound]);
 
   const handleOpponentComputerResetBoard = useCallback(() => {
-    if (gameMode !== "modeComputer" || !gameOver || isPlayerTurn) return;
-    setTimeout(() => {
-      handleResetBoard();
-    }, 1000);
-  }, [gameMode, gameOver, handleResetBoard, isPlayerTurn]);
+    if (gameMode !== "modeComputer" || isPlayerTurn || !isGameOver()) return;
+    setTimeout(handleResetBoard, isWin() ? 3000 : 1000);
+  }, [gameMode, handleResetBoard, isWin, isPlayerTurn, isGameOver]);
 
-  const checkGameOver = useCallback(() => {
-    if (gameOver) return;
+  const handleOnGameOver = useCallback(() => {
+    if (!isGameOver()) return;
 
-    const hasPlayerWon = checkWin(board, playerSymbol);
-    const hasOpponentWon = checkWin(board, opponentSymbol);
+    const hasPlayerWon = checkWin(boardCells, playerSymbol);
+    const hasOpponentWon = checkWin(boardCells, opponentSymbol);
 
-    if (hasPlayerWon || hasOpponentWon || isGameTie()) {
-      const key: keyof Scores = hasPlayerWon
-        ? "player"
-        : hasOpponentWon
-        ? "opponent"
-        : "tie";
+    const key = hasPlayerWon
+      ? player.id
+      : hasOpponentWon
+      ? (opponent as Player).id
+      : "tie";
 
-      if (isGameTie()) {
-        playSound("game-over");
-      }
+    playSound(key === "tie" ? "game-over" : "won");
 
-      if (hasPlayerWon || hasOpponentWon) {
-        playSound("won");
-      }
+    let keyScore = scores[key] || 0;
+    const newScores = { ...scores, [key]: keyScore + 1 };
+
+    if (gameMode === "modeComputer") {
+      const nextToPlay = whoStarted === "creator" ? "joined" : "creator";
 
       dispatch({
-        type: ActionTypes.INC_SCORE,
-        payload: key,
+        type: ActionTypes.SET_BOARD,
+        payload: {
+          ...session.board,
+          scores: newScores,
+          currentTurn: nextToPlay,
+          whoStarted: nextToPlay,
+        },
       });
-
-      setGameOver(true);
+    } else {
+      socket.emit(GAME_OVER, boardId, newScores);
     }
-  }, [
-    board,
-    dispatch,
-    gameOver,
-    isGameTie,
-    opponentSymbol,
-    playSound,
-    playerSymbol,
-  ]);
 
-  const togglePlayerTurn = useCallback(() => {
-    if (gameOver) {
-      const playerStarted = !playerStartedRef.current;
-      setIsPlayerTurn(playerStarted);
-      playerStartedRef.current = playerStarted;
-
-      if (gameMode === "modeLive") {
-        const nextToPlay: PlayerType = playerStarted ? "creator" : "joined";
-
-        socket.emit(GAME_OVER, boardId, nextToPlay);
-      }
-    }
-  }, [socket, gameOver, boardId, gameMode]);
+    //! This should run ONLY on game over
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGameOver]);
 
   const handleCellClick = useCallback(
     (symbol: string | null, index: number) => {
-      if (symbol || !isPlayerTurn || (isEmpty() && !isPlayerTurn)) {
+      if (
+        gameStatus !== "playing" ||
+        symbol ||
+        !isPlayerTurn ||
+        (isEmpty() && !isPlayerTurn)
+      ) {
         playSound("error");
         return;
       }
 
       playSound("player-move");
 
-      const updatedBoard = [...board];
-      updatedBoard[index] = playerSymbol;
-      dispatch({ type: ActionTypes.UPDATE_BOARD, payload: updatedBoard });
-      setIsPlayerTurn(false);
+      const updatedBoardCells = [...boardCells];
+      updatedBoardCells[index] = playerSymbol;
 
-      if (gameMode !== "modeComputer") {
-        const nextToPlay = player.type === "creator" ? "joined" : "creator";
-        socket.emit(PLAY, boardId, nextToPlay, updatedBoard);
+      dispatch({
+        type: ActionTypes.SET_BOARD,
+        payload: {
+          ...session.board,
+          cells: updatedBoardCells,
+          currentTurn: currentTurn === "creator" ? "joined" : "creator",
+        },
+      });
+
+      if (gameMode === "modeLive") {
+        socket.emit(PLAY, boardId, updatedBoardCells);
       }
     },
     [
-      socket,
-      board,
-      dispatch,
-      player.type,
+      boardCells,
       boardId,
+      currentTurn,
+      dispatch,
       gameMode,
+      gameStatus,
       isEmpty,
       isPlayerTurn,
       playSound,
       playerSymbol,
+      session.board,
+      socket,
     ]
   );
 
@@ -184,7 +210,7 @@ export function usePlayLogic(boardId = "") {
       let className = "";
       if (isWin()) {
         className += "board-win";
-        if (getWinningIndexes(board).includes(index)) {
+        if (getWinningIndexes(boardCells).includes(index)) {
           className += " win";
         }
       }
@@ -193,24 +219,40 @@ export function usePlayLogic(boardId = "") {
       }
       return className;
     },
-    [board, isWin, isGameTie]
+    [boardCells, isWin, isGameTie]
   );
 
   const listenForEvents = useCallback(() => {
-    const playedHandler = (
-      nextToPlay: PlayerType,
-      boardCells: Array<string | null>
-    ) => {
-      setIsPlayerTurn(player.type === nextToPlay);
-      dispatch({ type: ActionTypes.UPDATE_BOARD, payload: boardCells });
+    if (gameMode !== "modeLive") return;
 
-      if (boardCells.some((cell) => typeof cell !== "string")) {
+    const playedHandler = ({
+      cells,
+      currentTurn,
+    }: Pick<BoardState, "cells" | "currentTurn">) => {
+      dispatch({
+        type: ActionTypes.SET_BOARD,
+        payload: { ...session.board, cells, currentTurn },
+      });
+
+      if (cells.some((cell) => typeof cell !== "string")) {
         playSound("opponent-move");
       }
     };
 
-    const nextToPlayHandler = (nextToPlay: PlayerType) => {
-      setIsPlayerTurn(player.type === nextToPlay);
+    const updateForNextRoundHandler = ({
+      whoStarted,
+      currentTurn,
+      scores,
+    }: Pick<BoardState, "whoStarted" | "currentTurn" | "scores">) => {
+      dispatch({
+        type: ActionTypes.SET_BOARD,
+        payload: {
+          ...session.board,
+          whoStarted,
+          currentTurn,
+          scores,
+        },
+      });
     };
 
     const boardResetHandler = () => {
@@ -218,33 +260,38 @@ export function usePlayLogic(boardId = "") {
     };
 
     socket.on(PLAYED, playedHandler);
-
-    socket.on(UPDATE_NEXT_TO_PLAY, nextToPlayHandler);
-
+    socket.on(UPDATE_FOR_NEXT_ROUND, updateForNextRoundHandler);
     socket.on(BOARD_RESET, boardResetHandler);
 
     return () => {
       socket.off(PLAYED, playedHandler);
-      socket.off(UPDATE_NEXT_TO_PLAY, nextToPlayHandler);
+      socket.off(UPDATE_FOR_NEXT_ROUND, updateForNextRoundHandler);
       socket.off(BOARD_RESET, boardResetHandler);
     };
-  }, [socket, player.type, playSound, dispatch, handleResetBoard]);
+  }, [dispatch, gameMode, handleResetBoard, playSound, session.board, socket]);
 
-  useEffect(handleOpponentComputerMove, [handleOpponentComputerMove]);
-  useEffect(checkGameOver, [checkGameOver]);
-  useEffect(togglePlayerTurn, [togglePlayerTurn]);
-  useEffect(handleOpponentComputerResetBoard, [
-    handleOpponentComputerResetBoard,
-  ]);
-  useEffect(listenForEvents, [listenForEvents]);
+  useEffect(() => {
+    handleOpponentComputerMove();
+  }, [handleOpponentComputerMove]);
+
+  useEffect(() => {
+    handleOnGameOver();
+  }, [handleOnGameOver]);
+
+  useEffect(() => {
+    handleOpponentComputerResetBoard();
+  }, [handleOpponentComputerResetBoard]);
+
+  useEffect(() => {
+    listenForEvents();
+  }, [listenForEvents]);
 
   return {
-    board,
     getCellClassName,
     handleCellClick,
     resetBoard,
-    gameOver,
-    session,
+    isPlayerTurn,
+    isGameOver,
     dispatch,
   };
 }

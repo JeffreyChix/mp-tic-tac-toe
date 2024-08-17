@@ -1,4 +1,9 @@
-import type { GameSession, Scores, GameScores, Theme } from "../../../type";
+import type {
+  GameSession,
+  Theme,
+  BoardState,
+  Player,
+} from "../../../type";
 
 export function getPosition(index: number) {
   switch (index) {
@@ -23,7 +28,7 @@ export function getPosition(index: number) {
   }
 }
 
-export const DEFAULT_BOARD_STATE = Array.from({ length: 9 }, () => null);
+export const DEFAULT_BOARD_CELLS = Array.from({ length: 9 }, () => null);
 
 export const GAME_SCORES = "GAME_SCORES";
 
@@ -77,27 +82,38 @@ export const THEMES_WITH_DISPLAY_NAMES: Array<{ name: string; value: Theme }> =
   ];
 
 export const DEFAULT_SCORE = {
-  player: 0,
-  opponent: 0,
   tie: 0,
 };
 
-export const DEFAULT_GAME_SCORES = {
-  modeComputer: DEFAULT_SCORE,
-  modeLive: DEFAULT_SCORE,
+const DEFAULT_PLAYER: Player = {
+  username: "Player 1",
+  symbol: "x",
+  id: "__device_player",
+  type: "creator",
+};
+
+const DEFAULT_OPPONENT: Player = {
+  username: "Computer",
+  symbol: "o",
+  id: "__computer__",
+  type: "joined",
+};
+
+export const DEFAULT_BOARD_STATE: BoardState = {
+  cells: DEFAULT_BOARD_CELLS,
+  gameMode: "modeComputer",
+  player: DEFAULT_PLAYER,
+  opponent: DEFAULT_OPPONENT,
+  scores: DEFAULT_SCORE,
+  boardId: "__local__",
+  whoStarted: "creator",
+  currentTurn: "creator",
+  gameStatus: "playing",
+  players: [DEFAULT_PLAYER, DEFAULT_OPPONENT],
 };
 
 export const DEFAULT_GAME_SESSION: GameSession = {
   board: DEFAULT_BOARD_STATE,
-  gameMode: "modeComputer",
-  player: { username: "Player 1", symbol: "x", id: "creator", type: "creator" },
-  opponent: {
-    username: "Computer",
-    symbol: "o",
-    id: "opponent",
-    type: "joined",
-  },
-  scores: DEFAULT_GAME_SCORES,
   settings: {
     sound: true,
   },

@@ -34,25 +34,13 @@ export type GameSettings = {
 };
 
 export type Scores = {
-  player: number;
-  opponent: number;
+  [key: string]: number;
   tie: number;
 };
 
-export type GameScores = Record<GameMode, Scores>;
-
 export type GameSession = {
-  board: Array<string | null>;
-  player: Player;
-  opponent: Player;
-  scores: GameScores;
+  board: BoardState;
   settings: GameSettings;
-  gameMode: GameMode;
-};
-
-export type PlayerMove = {
-  index: number;
-  boardState: Array<string | null>;
 };
 
 export type NewPlayer = {
@@ -68,11 +56,15 @@ export type Player = {
 };
 
 export type BoardState = {
+  cells: Array<string | null>;
   player: Player;
   opponent?: Player;
+  gameMode: GameMode;
   currentTurn: PlayerType;
+  whoStarted: PlayerType;
+  players: Player[];
   boardId: string;
   gameStatus: "waiting" | "playing";
   scores: Scores;
-  numPlayers: number;
+  boardName?: string;
 };

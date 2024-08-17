@@ -12,6 +12,7 @@ import {
   Suspense,
   useCallback,
 } from "react";
+import { toast } from "sonner";
 import _isEqual from "lodash.isequal";
 
 import type { GameSession } from "../../../type";
@@ -49,7 +50,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const initialRef = useRef({
-    scores: session.scores,
+    scores: session.board.scores,
     settings: session.settings,
   });
 
@@ -60,7 +61,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
     const savedSettings = localStorage.getItem(GAME_SETTINGS);
     let socketSessionID = localStorage.getItem(SOCKET_SESSION_ID);
 
-    if (savedScores) {
+    if (savedScores && session.board.gameMode === "modeComputer") {
       dispatch({
         type: ActionTypes.LOAD_SCORES,
         payload: JSON.parse(savedScores),
@@ -81,11 +82,18 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
     socket.auth = { sessionID: socketSessionID };
     socket.connect();
 
-    setLoading(false);
-  }, [socket]);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, [session.board.gameMode, socket]);
 
   const saveData = useCallback(() => {
-    const { scores, settings } = session;
+    const {
+      board: { scores, gameMode },
+      settings,
+    } = session;
+
+    if (gameMode !== "modeComputer") return;
 
     if (!_isEqual(initialRef.current.scores, scores)) {
       localStorage.setItem(GAME_SCORES, JSON.stringify(scores));
@@ -107,7 +115,8 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 
     const connectErrorHandler = (err: any) => {
       if (socket.active) return;
-      // toast
+
+      toast.error("Server connection failure!");
       console.info(err);
     };
 

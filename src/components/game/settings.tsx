@@ -6,10 +6,26 @@ import { Separator } from "../ui/separator";
 import { THEMES_WITH_DISPLAY_NAMES } from "@/lib/game/utils";
 import { useGameSession } from "@/hooks/useGameSession";
 import { ActionTypes } from "@/contexts/game-session/reducer";
+import { RenderDialog } from "../render-dialog";
+import { CreateNewBoard } from "./forms/create-new-board";
 
 export function Settings() {
   return (
     <div className="flex flex-col gap-4 overflow-auto py-8 px-4">
+      <RenderDialog
+        className="grid md:hidden"
+        trigger={
+          <div className="block md:hidden">
+            <>
+              Create Board
+              <Separator className="my-2" />
+            </>
+          </div>
+        }
+      >
+        <CreateNewBoard />
+      </RenderDialog>
+
       <ThemeSettings />
       <Separator />
       <ToggleSound />
@@ -24,7 +40,7 @@ const ThemeSettings = () => {
     <div>
       <p>Choose a theme</p>
 
-      <div className="grid grid-cols-3 gap-3 items-start justify-center my-5">
+      <div className="flex flex-wrap sm:grid sm:grid-cols-3 gap-3 items-start my-5">
         {THEMES_WITH_DISPLAY_NAMES.map(({ name, value }, index) => (
           <button
             className={clsx("relative grid place-items-center gap-1", value)}
