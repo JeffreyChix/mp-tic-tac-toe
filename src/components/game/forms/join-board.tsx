@@ -99,7 +99,7 @@ export function JoinBoardForm({ boardId }: { boardId: string }) {
           <Info size={35} className="text-red-600" />
 
           <p className="font-josefin-sans text-center">
-            Sorry! You can't join this board right now. It appears to be full.
+            Sorry! You cannot join this board right now. It appears to be full.
           </p>
 
           <Button onClick={() => router.push("/")}>Okay</Button>
