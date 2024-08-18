@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Josefin_Sans } from "next/font/google";
 import "./globals.scss";
@@ -37,11 +38,13 @@ export default function RootLayout({
           attribute="class"
           disableTransitionOnChange
         >
-          <GameSessionProvider>
-            <InitSounds />
-            {children}
-            <Toaster theme="dark" pauseWhenPageIsHidden />
-          </GameSessionProvider>
+          <Suspense>
+            <GameSessionProvider>
+              <InitSounds />
+              {children}
+              <Toaster theme="dark" pauseWhenPageIsHidden />
+            </GameSessionProvider>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

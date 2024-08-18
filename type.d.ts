@@ -62,7 +62,7 @@ export type BoardState = {
   gameMode: GameMode;
   currentTurn: PlayerType;
   whoStarted: PlayerType;
-  players: Player[];
+  connectedPlayers: string[];
   boardId: string;
   gameStatus: "waiting" | "playing";
   scores: Scores;

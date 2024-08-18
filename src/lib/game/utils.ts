@@ -1,9 +1,4 @@
-import type {
-  GameSession,
-  Theme,
-  BoardState,
-  Player,
-} from "../../../type";
+import type { GameSession, Theme, BoardState, Player } from "../../../type";
 
 export function getPosition(index: number) {
   switch (index) {
@@ -109,7 +104,7 @@ export const DEFAULT_BOARD_STATE: BoardState = {
   whoStarted: "creator",
   currentTurn: "creator",
   gameStatus: "playing",
-  players: [DEFAULT_PLAYER, DEFAULT_OPPONENT],
+  connectedPlayers: ["__device_player", "__computer__"],
 };
 
 export const DEFAULT_GAME_SESSION: GameSession = {
@@ -118,3 +113,39 @@ export const DEFAULT_GAME_SESSION: GameSession = {
     sound: true,
   },
 };
+
+export function organizeBoardForSession(
+  sessionID: string,
+  boardState: BoardState
+): BoardState {
+  const { player, opponent } = boardState;
+  const isSessionPlayer = player.id === sessionID;
+
+  return {
+    ...boardState,
+    player: isSessionPlayer ? player : (opponent as Player),
+    opponent: isSessionPlayer ? opponent : player,
+  };
+}
+
+export function getSessionPlayerName(id: string, boardState: BoardState) {
+  const { player, opponent } = boardState;
+
+  const sessionPlayer = id === player.id ? player : opponent;
+
+  return sessionPlayer?.username;
+}
+
+export function extractBoarIdFromPathname(pathname: string): string | null {
+  const boardPathnamePrefix = "/board/";
+
+  if (pathname.startsWith(boardPathnamePrefix)) {
+    const parts = pathname.slice(boardPathnamePrefix.length).split("/");
+
+    if (parts.length > 0) {
+      return parts[0];
+    }
+  }
+
+  return "";
+}

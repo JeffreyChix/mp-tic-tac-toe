@@ -40,6 +40,10 @@ export const CONNECT = "connect";
 
 export const DISCONNECT = "disconnect";
 
+export const PLAYER_DISCONNECTED = "PLAYER_DISCONNECTED";
+
+export const PLAYER_CONNECTED = "PLAYER_CONNECTED";
+
 export const CONNECT_ERROR = "connect_error";
 
 export const ERROR = "ERROR";

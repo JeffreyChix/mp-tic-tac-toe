@@ -15,8 +15,4 @@ export function shuffleArray(array: Array<any>) {
   return array;
 }
 
-export function generateBoardId() {
-  return Math.random().toString(36).substring(2, 9);
-}
-
 export const NEXT_PUBLIC_URL = process.env.NEXT_PUBLIC_URL as string;

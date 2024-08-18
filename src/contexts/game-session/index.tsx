@@ -9,9 +9,9 @@ import {
   useRef,
   useMemo,
   useState,
-  Suspense,
   useCallback,
 } from "react";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import _isEqual from "lodash.isequal";
 
@@ -20,6 +20,7 @@ import {
   DEFAULT_GAME_SESSION,
   GAME_SETTINGS,
   GAME_SCORES,
+  extractBoarIdFromPathname,
 } from "@/lib/game/utils";
 import { Action, ActionTypes, gameSessionReducer } from "./reducer";
 import { GameLoading } from "@/components/game/loading";
@@ -44,6 +45,10 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
     gameSessionReducer,
     DEFAULT_GAME_SESSION
   );
+
+  const pathname = usePathname();
+
+  const currentBoardId = extractBoarIdFromPathname(pathname);
 
   const { socket } = useSocket();
 
@@ -79,12 +84,10 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
       socketSessionID = NEW_SOCKET_SESSION_ID;
     }
 
-    socket.auth = { sessionID: socketSessionID };
+    socket.auth = { sessionID: socketSessionID, boardId: currentBoardId };
     socket.connect();
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    setLoading(false);
   }, [session.board.gameMode, socket]);
 
   const saveData = useCallback(() => {
@@ -150,7 +153,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <GameSessionContext.Provider value={contextValue}>
-      <Suspense>{children}</Suspense>
+      {children}
     </GameSessionContext.Provider>
   );
 }

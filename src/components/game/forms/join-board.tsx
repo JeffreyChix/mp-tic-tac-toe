@@ -21,20 +21,25 @@ import { useSocket } from "@/hooks/useSocket";
 import { JOIN_BOARD, VERIFY_BOARD } from "@/lib/socket/utils";
 import { GameLoading } from "../loading";
 import { RenderDialog } from "@/components/render-dialog";
-import { BoardState, Player } from "../../../../type";
+import { BoardState } from "../../../../type";
 import { RogueBoard } from "../rogue-board";
 import { useGameSession } from "@/hooks/useGameSession";
 import { ActionTypes } from "@/contexts/game-session/reducer";
+import { organizeBoardForSession } from "@/lib/game/utils";
+import { Info } from "lucide-react";
 
 export function JoinBoardForm({ boardId }: { boardId: string }) {
   const { dispatch } = useGameSession();
 
   const { socket } = useSocket();
 
-  const [boardName, setBoardName] = useState("Join Board");
   const [isGameLoading, setIsGameLoading] = useState(true);
   const [isRogue, setIsRogue] = useState(false);
-  const [alreadySelectedSymbol, setAlreadySelectedSymbol] = useState("");
+  const [boardInfo, setBoardInfo] = useState({
+    name: "Join Board",
+    symbol: "",
+  });
+  const [isError, setIsError] = useState(false);
 
   const router = useRouter();
 
@@ -48,8 +53,11 @@ export function JoinBoardForm({ boardId }: { boardId: string }) {
         setIsRogue(true);
         return;
       }
-      setBoardName(`${res.board.player.username}'s Board`);
-      setAlreadySelectedSymbol(res.board.player.symbol);
+
+      setBoardInfo({
+        name: `${res.board.player.username}'s Board`,
+        symbol: res.board.player.symbol,
+      });
     });
   }, [boardId, socket]);
 
@@ -66,17 +74,15 @@ export function JoinBoardForm({ boardId }: { boardId: string }) {
       JOIN_BOARD,
       boardId,
       values,
-      (res: { status: "OK"; board: BoardState }) => {
+      (res: { status: string; board: BoardState }) => {
         if (res.status === "OK") {
           dispatch({
             type: ActionTypes.SET_BOARD,
-            payload: {
-              ...res.board,
-              player: res.board.opponent as unknown as Player,
-              opponent: res.board.player,
-            },
+            payload: organizeBoardForSession(socket.sessionID, res.board),
           });
           router.push(`/board/${boardId}`);
+        } else {
+          setIsError(true);
         }
       }
     );
@@ -86,10 +92,26 @@ export function JoinBoardForm({ boardId }: { boardId: string }) {
 
   if (!isGameLoading && isRogue) return <RogueBoard />;
 
+  if (isError) {
+    return (
+      <RenderDialog open hideCloseBtn>
+        <div className="grid place-items-center gap-3 p-4">
+          <Info size={35} className="text-red-600" />
+
+          <p className="font-josefin-sans text-center">
+            Sorry! You can't join this board right now. It appears to be full.
+          </p>
+
+          <Button onClick={() => router.push("/")}>Okay</Button>
+        </div>
+      </RenderDialog>
+    );
+  }
+
   return (
     <RenderDialog open hideCloseBtn>
       <div>
-        <p className="capitalize">{boardName}</p>
+        <p className="capitalize">{boardInfo.name}</p>
 
         <div className="my-5">
           <Form {...form}>
@@ -133,7 +155,7 @@ export function JoinBoardForm({ boardId }: { boardId: string }) {
                                   key={index}
                                   symbol={s}
                                   {...field}
-                                  unavailable={alreadySelectedSymbol}
+                                  unavailable={boardInfo.symbol}
                                 />
                               ))}
                             </div>

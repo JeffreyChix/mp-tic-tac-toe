@@ -39,6 +39,7 @@ export function CreateNewBoard() {
 
   const onSubmit = async (values: any) => {
     setIsCreating(true);
+
     socket.emit(
       CREATE_BOARD,
       values,
